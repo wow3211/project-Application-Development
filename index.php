@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saudi Smart Tourism - Visit Saudia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- GLOBAL FONTS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        /* --- SPA VISIBILITY LOGIC --- */
+        .app-page { display: none; min-height: 100vh; flex-direction: column; }
+        .app-page.active { display: flex; }
+
+        /* --- CAPTCHA STYLES --- */
+        .grid-cell {
+            height: 80px; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; cursor: pointer; background-color: #ffffff;
+            border: 2px solid #e5e7eb; border-radius: 8px; transition: all 0.2s;
+        }
+        .selected {
+            background-color: #ECFDF5; border-color: #059669; transform: scale(0.95);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
+        }
+
+        /* --- SLIDESHOW STYLES --- */
+        .slideshow-container {
+            max-width: 1000px; position: relative; margin: 20px auto;
+            border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.2); background: #fff;
+        }
+        .mySlides, .aboutSlides { display: none; }
+        .mySlides img { width: 100%; height: 400px; object-fit: cover; }
+        .about-card {
+            padding: 40px; text-align: center; height: 300px; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            background: linear-gradient(to bottom right, #ECFDF5, #fff);
+        }
+        .prev, .next {
+            cursor: pointer; position: absolute; top: 50%; width: auto; margin-top: -22px;
+            padding: 16px; color: white; font-weight: bold; font-size: 18px;
+            transition: 0.6s ease; border-radius: 0 3px 3px 0; user-select: none;
+            background-color: rgba(0,0,0,0.3);
+        }
+        .about-arrow { color: #065F46; } 
+        .next { right: 0; border-radius: 3px 0 0 3px; }
+        .prev:hover, .next:hover { background-color: rgba(6, 95, 70, 0.9); color: white;}
+        .text {
+            color: #f2f2f2; font-size: 18px; font-weight: bold; padding: 15px;
+            position: absolute; bottom: 0; width: 100%; text-align: center;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+        .numbertext { color: #f2f2f2; font-size: 12px; padding: 8px 12px; position: absolute; top: 0; }
+        .dot, .about-dot {
+            cursor: pointer; height: 12px; width: 12px; margin: 0 4px;
+            background-color: #bbb; border-radius: 50%; display: inline-block;
+            transition: background-color 0.6s ease;
+        }
+        .active-dot, .dot:hover, .about-dot:hover { background-color: #059669; }
+        .fade { animation-name: fade; animation-duration: 1.5s; }
+        @keyframes fade { from {opacity: .4} to {opacity: 1} }
+        .error-text { font-size: 0.75rem; color: #dc2626; margin-top: 4px; display: none; }
+
+        /* --- CHATBOT STYLES --- */
+        #chat-widget { position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-family: 'Inter', sans-serif; }
+        #chat-toggle {
+            background-color: #065F46; color: white; width: 60px; height: 60px;
+            border-radius: 50%; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: transform 0.3s; display: flex; align-items: center;
+            justify-content: center; font-size: 30px;
+        }
+        #chat-toggle:hover { transform: scale(1.1); }
+        #chat-window {
+            display: none; width: 350px; height: 450px; background: white;
+            border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+            flex-direction: column; overflow: hidden; position: absolute;
+            bottom: 80px; right: 0; border: 1px solid #e5e7eb;
+        }
+        #chat-header { background: #065F46; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; background: #f9fafb; font-size: 0.95rem; }
+        .msg { margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
+        .bot-msg { background: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 0; }
+        .user-msg { background: #059669; color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 0; }
+        #chat-input-area { display: flex; border-top: 1px solid #e5e7eb; background: white; }
+        #chat-input { flex-grow: 1; padding: 15px; border: none; outline: none; }
+        #chat-send { background: #065F46; color: white; border: none; padding: 0 20px; cursor: pointer; font-weight: bold; }
+
+        /* --- FOOTER SOCIAL ICONS --- */
+        .social-icons i {
+            font-size: 1.2rem;
+            margin: 0 8px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .social-icons i:hover {
+            color: #34D399; /* Emerald 400 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+    <div id="chat-widget">
+        <div id="chat-window">
+            <div id="chat-header"><span>🤖 AI Assistant</span><span style="cursor:pointer;" onclick="toggleChat()">✕</span></div>
+            <div id="chat-messages"><div class="msg bot-msg">Hello! I am the Saudi Tourism AI. Ask me about Diriyah, AlUla, or ticket prices!</div></div>
+            <div id="chat-input-area"><input type="text" id="chat-input" placeholder="Type a message..." onkeypress="handleKeyPress(event)"><button id="chat-send" onclick="sendMessage()">Send</button></div>
+        </div>
+        <div id="chat-toggle" onclick="toggleChat()">🤖</div>
+    </div>
+
+    <?php
+    $footerContent = '
+    <footer class="bg-emerald-900 text-white py-8 mt-auto border-t-4 border-emerald-700">
+        <div class="container mx-auto px-4 text-center">
+            <h3 class="text-xl font-bold mb-4">Contact Us</h3>
+            <p class="mb-4 text-emerald-100">Email: info@visitsaudi.com | Phone: +966 11 000 0000</p>
+            <div class="social-icons mb-6 flex justify-center flex-wrap gap-4">
+                <i class="fab fa-facebook-f" title="Facebook"></i>
+                <i class="fab fa-twitter" title="Twitter"></i>
+                <i class="fab fa-google" title="Google"></i>
+                <i class="fab fa-instagram" title="Instagram"></i>
+                <i class="fab fa-linkedin-in" title="LinkedIn"></i>
+                <i class="fab fa-pinterest" title="Pinterest"></i>
+                <i class="fab fa-vk" title="VK"></i>
+                <i class="fab fa-stack-overflow" title="Stack Overflow"></i>
+                <i class="fab fa-youtube" title="YouTube"></i>
+                <i class="fab fa-slack-hash" title="Slack"></i>
+                <i class="fab fa-github" title="GitHub"></i>
+                <i class="fab fa-dribbble" title="Dribbble"></i>
+                <i class="fab fa-reddit-alien" title="Reddit"></i>
+                <i class="fab fa-whatsapp" title="WhatsApp"></i>
+            </div>
+
+            <p class="text-xs text-emerald-300 opacity-80">
+                &copy; ' . date("Y") . ' Saudi Smart Tourism. All Rights Reserved.
+            </p>
+        </div>
+    </footer>';
+    ?>
+
+    <div id="page-captcha" class="app-page active items-center justify-center">
+        <div class="w-full max-w-lg p-8">
+            <div class="bg-white p-8 rounded-xl shadow-2xl w-full border border-slate-200">
+                <h2 class="text-3xl font-extrabold text-center text-slate-800 mb-4 text-emerald-600">SECURITY CHECK</h2>
+                <div class="flex flex-col items-center gap-4">
+                    <p class="text-lg font-semibold text-center text-slate-700">Select all **🦅 Eagles**</p>
+                    <div id="captchaGrid" class="grid grid-cols-3 gap-3 w-full max-w-xs p-2 bg-slate-100 rounded-lg shadow-inner border border-slate-300"></div>
+                    <button onclick="generateCaptcha()" class="text-sm text-blue-600 underline mt-2">Generate New</button>
+                    <div id="statusMessage" class="h-6 text-center font-bold text-sm mt-3"></div>
+                    <button onclick="validateCaptcha()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow-xl">ENTER SITE</button>
+                </div>
+            </div>
+        </div>
+        <footer class="mt-8 text-slate-400 text-sm">&copy; <?php echo date("Y"); ?> Saudi Smart Tourism.</footer>
+    </div>
+
+    <div id="page-signin" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2"><div class="bg-white p-1 rounded"><img src="logo.jpeg" alt="Logo" class="h-8 w-auto"></div><span class="font-bold text-lg hidden md:block">Saudi Smart Tourism</span></div>
+            <nav>
+                <ul class="flex gap-4 font-medium">
+                    <li><a onclick="navigateTo('page-home')" class="cursor-pointer hover:text-emerald-300">Home</a></li>
+                    <li><a onclick="navigateTo('page-about')" class="cursor-pointer hover:text-emerald-300">About Us</a></li>
+                    <li><a onclick="navigateTo('page-feedback')" class="cursor-pointer hover:text-emerald-300">Feedback</a></li>
+                    <li><a onclick="navigateTo('page-signup')" class="cursor-pointer hover:text-emerald-300">Sign Up</a></li>
+                    <li><a onclick="navigateTo('page-signin')" class="cursor-pointer hover:text-emerald-300 text-emerald-300">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main class="container mx-auto px-4 py-10 flex-grow flex items-center justify-center">
+            <section class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6">Sign In</h2>
+                <form onsubmit="validateSignIn(event)" class="space-y-4">
+                    <div><label class="block text-sm font-medium">Username</label><input type="text" id="signin_username" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                    <div><label class="block text-sm font-medium">Password</label><input type="password" id="signin_password" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md shadow-md">Sign In</button>
+                </form>
+            </section>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-signup" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2"><div class="bg-white p-1 rounded"><img src="logo.jpeg" alt="Logo" class="h-8 w-auto"></div><span class="font-bold text-lg hidden md:block">Saudi Smart Tourism</span></div>
+            <nav>
+                <ul class="flex gap-4 font-medium">
+                    <li><a onclick="navigateTo('page-home')" class="cursor-pointer hover:text-emerald-300">Home</a></li>
+                    <li><a onclick="navigateTo('page-about')" class="cursor-pointer hover:text-emerald-300">About Us</a></li>
+                    <li><a onclick="navigateTo('page-feedback')" class="cursor-pointer hover:text-emerald-300">Feedback</a></li>
+                    <li><a onclick="navigateTo('page-signup')" class="cursor-pointer hover:text-emerald-300 text-emerald-300">Sign Up</a></li>
+                    <li><a onclick="navigateTo('page-signin')" class="cursor-pointer hover:text-emerald-300">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main class="container mx-auto px-4 py-10 flex-grow">
+            <section class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-slate-800 border-b pb-4 mb-6">Create Account</h2>
+                <form id="signupForm" onsubmit="return validateSignUp(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium">Name</label><input type="text" id="name" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                        <div><label class="block text-sm font-medium">Date of Birth (18+)</label><input type="date" id="date" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                    </div>
+                    <div><label class="block text-sm font-medium">Password</label><input type="password" id="password" required class="mt-1 w-full px-3 py-2 border rounded-md"><div id="passwordError" class="error-text">Min 6 chars, 1 Number, 1 Uppercase required.</div></div>
+                    <div><label class="block text-sm font-medium">Re-enter Password</label><input type="password" id="confirm_password" required class="mt-1 w-full px-3 py-2 border rounded-md"><div id="matchError" class="error-text">Passwords do not match.</div></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div><label class="block text-sm font-medium">Semester (1-8)</label><input type="number" id="semester" min="1" max="8" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                        <div><label class="block text-sm font-medium">City</label><input type="text" id="city" required class="mt-1 w-full px-3 py-2 border rounded-md"></div>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-md shadow-md transition mt-4">Sign Up</button>
+                </form>
+            </section>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-home" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2"><div class="bg-white p-1 rounded"><img src="logo.jpeg" alt="Logo" class="h-8 w-auto"></div><span class="font-bold text-lg hidden md:block">Saudi Smart Tourism</span></div>
+            <nav class="flex items-center gap-6">
+                <ul class="flex gap-4 font-medium">
+                    <li><a onclick="navigateTo('page-home')" class="cursor-pointer hover:text-emerald-300 text-emerald-300">Home</a></li>
+                    <li><a onclick="navigateTo('page-about')" class="cursor-pointer hover:text-emerald-300">About Us</a></li>
+                    <li><a onclick="navigateTo('page-feedback')" class="cursor-pointer hover:text-emerald-300">Feedback</a></li>
+                    <li><a onclick="navigateTo('page-signup')" class="cursor-pointer hover:text-emerald-300">Sign Up</a></li>
+                    <li><a onclick="navigateTo('page-signin')" class="cursor-pointer hover:text-emerald-300">Sign In</a></li>
+                </ul>
+                <div id="userWelcomeDisplay" class="text-emerald-200 font-bold text-sm bg-emerald-900 px-3 py-1 rounded-full">Guest</div>
+            </nav>
+        </header>
+        <main class="container mx-auto px-4 py-6 flex-grow">
+            <h1 class="text-4xl font-extrabold text-center text-emerald-800 mb-2">Welcome to Saudi Smart Tourism</h1>
+            <p class="text-center text-slate-500 mb-8">Experience the land of storytelling.</p>
+            <div class="slideshow-container">
+                <div class="mySlides fade"><div class="numbertext">1 / 2</div><img src="dirya.jpg" onclick="openModal('diriyah')"><div class="text">Diriyah - The City of Earth</div></div>
+                <div class="mySlides fade"><div class="numbertext">2 / 2</div><img src="alulaff.jpg" onclick="openModal('alula')"><div class="text">AlUla - The World's Masterpiece</div></div>
+                <a class="prev" onclick="plusSlides(-1)">&#10094;</a><a class="next" onclick="plusSlides(1)">&#10095;</a>
+            </div>
+            <div style="text-align:center; margin-bottom:20px;"><span class="dot" onclick="currentSlide(1)"></span><span class="dot" onclick="currentSlide(2)"></span></div>
+            <section class="max-w-4xl mx-auto space-y-6 mt-12">
+                <h2 class="text-2xl font-bold text-slate-800 border-b pb-2">Destinations Preview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer" onclick="openModal('diriyah')"><img src="dirya.jpg" class="h-48 w-full object-cover"><div class="p-5"><h3 class="font-bold text-xl text-emerald-800">Diriyah</h3></div></div>
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition cursor-pointer" onclick="openModal('alula')"><img src="alulaff.jpg" class="h-48 w-full object-cover"><div class="p-5"><h3 class="font-bold text-xl text-emerald-800">AlUla</h3></div></div>
+                </div>
+            </section>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-about" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2"><div class="bg-white p-1 rounded"><img src="logo.jpeg" alt="Logo" class="h-8 w-auto"></div><span class="font-bold text-lg hidden md:block">Saudi Smart Tourism</span></div>
+            <nav>
+                <ul class="flex gap-4 font-medium">
+                    <li><a onclick="navigateTo('page-home')" class="cursor-pointer hover:text-emerald-300">Home</a></li>
+                    <li><a onclick="navigateTo('page-about')" class="cursor-pointer hover:text-emerald-300 text-emerald-300">About Us</a></li>
+                    <li><a onclick="navigateTo('page-feedback')" class="cursor-pointer hover:text-emerald-300">Feedback</a></li>
+                    <li><a onclick="navigateTo('page-signup')" class="cursor-pointer hover:text-emerald-300">Sign Up</a></li>
+                    <li><a onclick="navigateTo('page-signin')" class="cursor-pointer hover:text-emerald-300">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main class="container mx-auto px-4 py-10 flex-grow">
+            <h1 class="text-3xl font-extrabold text-center text-emerald-800 mb-8">Meet Our Developers</h1>
+            <div class="slideshow-container">
+                <div class="aboutSlides fade"><div class="about-card"><h2 class="text-3xl font-bold text-slate-800 mb-2">Rayan Alrajhi</h2><div class="w-16 h-1 bg-emerald-500 mb-4 rounded"></div><p class="text-xl text-slate-600"><strong>Degree:</strong> Information Systems (IS)</p><p class="text-xl text-slate-600"><strong>Interests:</strong> Soccer ⚽</p></div></div>
+                <div class="aboutSlides fade"><div class="about-card"><h2 class="text-3xl font-bold text-slate-800 mb-2">Future Member</h2><div class="w-16 h-1 bg-emerald-500 mb-4 rounded"></div><p class="text-xl text-slate-600"><strong>Degree:</strong> Computer Science</p><p class="text-xl text-slate-600"><strong>Interests:</strong> Web Design 💻</p></div></div>
+                <a class="prev about-arrow" onclick="plusAboutSlides(-1)">&#10094;</a><a class="next about-arrow" onclick="plusAboutSlides(1)">&#10095;</a>
+            </div>
+            <div style="text-align:center; margin-top:20px;"><span class="about-dot" onclick="currentAboutSlide(1)"></span><span class="about-dot" onclick="currentAboutSlide(2)"></span></div>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-feedback" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center gap-2"><div class="bg-white p-1 rounded"><img src="logo.jpeg" alt="Logo" class="h-8 w-auto"></div><span class="font-bold text-lg hidden md:block">Saudi Smart Tourism</span></div>
+            <nav>
+                <ul class="flex gap-4 font-medium">
+                    <li><a onclick="navigateTo('page-home')" class="cursor-pointer hover:text-emerald-300">Home</a></li>
+                    <li><a onclick="navigateTo('page-about')" class="cursor-pointer hover:text-emerald-300">About Us</a></li>
+                    <li><a onclick="navigateTo('page-feedback')" class="cursor-pointer hover:text-emerald-300 text-emerald-300">Feedback</a></li>
+                    <li><a onclick="navigateTo('page-signup')" class="cursor-pointer hover:text-emerald-300">Sign Up</a></li>
+                    <li><a onclick="navigateTo('page-signin')" class="cursor-pointer hover:text-emerald-300">Sign In</a></li>
+                </ul>
+            </nav>
+        </header>
+        <main class="container mx-auto px-4 py-10 flex-grow">
+            <h1 class="text-3xl font-extrabold text-center text-emerald-800 mb-8">User Feedback</h1>
+            <section class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg mb-10">
+                <h3 class="text-xl font-bold text-slate-800 mb-4">Leave a Review</h3>
+                <form onsubmit="submitFeedback(event)">
+                    <textarea id="feedbackMsg" class="w-full border rounded-md p-3 mb-4" rows="3" placeholder="Write your feedback here..." required></textarea>
+                    <button type="submit" class="bg-emerald-600 text-white px-6 py-2 rounded hover:bg-emerald-700">Submit</button>
+                </form>
+            </section>
+            <section class="max-w-4xl mx-auto space-y-4" id="feedback-list">
+                <p class="text-center text-slate-500">Loading reviews...</p>
+            </section>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-diriyah" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 flex justify-between items-center sticky top-0 z-50"><div class="font-bold text-lg">Saudi Smart Tourism</div><nav><a onclick="navigateTo('page-home')" class="cursor-pointer hover:underline">Back Home</a></nav></header>
+        <main class="container mx-auto px-4 py-10 flex-grow">
+            <h2 class="text-3xl font-extrabold text-emerald-800 mb-4">Explore Diriyah</h2>
+            <img src="dirya.jpg" class="w-full h-96 object-cover rounded-xl shadow-lg mb-6">
+            <div class="prose max-w-none text-slate-700 space-y-4">
+                <p><strong>Historical Facts:</strong> Diriyah is the ancestral heart of the nation, serving as the capital of the First Saudi State and home to the UNESCO-listed At-Turaif district.</p>
+                <div class="bg-emerald-50 p-4 rounded-lg"><h3 class="font-bold text-emerald-800">Ticket Information</h3><ul class="list-disc ml-5 mt-2"><li>General Entry: Free on weekdays until 4 PM.</li><li>Diriyah Pass: 100 SAR (Redeemable on food/beverage).</li></ul></div>
+            </div>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="page-alula" class="app-page">
+        <header class="bg-emerald-800 text-white p-4 flex justify-between items-center sticky top-0 z-50"><div class="font-bold text-lg">Saudi Smart Tourism</div><nav><a onclick="navigateTo('page-home')" class="cursor-pointer hover:underline">Back Home</a></nav></header>
+        <main class="container mx-auto px-4 py-10 flex-grow">
+            <h2 class="text-3xl font-extrabold text-emerald-800 mb-4">Explore AlUla</h2>
+            <img src="alulaff.jpg" class="w-full h-96 object-cover rounded-xl shadow-lg mb-6">
+            <div class="prose max-w-none text-slate-700 space-y-4">
+                <p><strong>Historical Facts:</strong> AlUla acts as a window into deep antiquity, famous for the monumental tombs of Hegra carved directly into sandstone cliffs by the Nabataeans.</p>
+                <div class="bg-emerald-50 p-4 rounded-lg"><h3 class="font-bold text-emerald-800">Ticket Information</h3><ul class="list-disc ml-5 mt-2"><li>Standard Tour: 95 SAR per person.</li><li>Old Town: Free entry (Reservation required).</li></ul></div>
+            </div>
+        </main>
+        <?php echo $footerContent; ?>
+    </div>
+
+    <div id="imageModal" class="hidden fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" onclick="closeModal()">
+        <div class="bg-white rounded-xl overflow-hidden max-w-4xl w-full shadow-2xl relative flex flex-col md:flex-row" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-2 right-2 text-slate-500 hover:text-red-500 font-bold text-2xl z-10">&times;</button>
+            <div class="w-full md:w-2/3 h-64 md:h-auto relative"><img id="modalImage" src="" class="w-full h-full object-cover"></div>
+            <div class="w-full md:w-1/3 p-6 flex flex-col justify-center">
+                <h3 id="modalTitle" class="text-2xl font-bold text-emerald-800 mb-2"></h3>
+                <p id="modalDesc" class="text-slate-600 mb-6"></p>
+                <button id="modalActionBtn" class="w-full bg-emerald-600 text-white py-2 rounded hover:bg-emerald-700">Explore</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ROUTER ---
+        function navigateTo(pageId) {
+            document.querySelectorAll('.app-page').forEach(page => page.classList.remove('active'));
+            const selectedPage = document.getElementById(pageId);
+            if (selectedPage) {
+                selectedPage.classList.add('active');
+                window.scrollTo(0, 0);
+                if (pageId === 'page-home') updateWelcomeMessage();
+                if (pageId === 'page-feedback') loadFeedbacks();
+            }
+        }
+        function updateWelcomeMessage() {
+            const username = localStorage.getItem('username');
+            const display = document.getElementById('userWelcomeDisplay');
+            if (username && display) display.innerText = "Welcome, " + username;
+        }
+
+        // --- 2. CAPTCHA LOGIC ---
+        const gridContainer = document.getElementById('captchaGrid');
+        const statusMessage = document.getElementById('statusMessage');
+        const targetEmoji = '🦅'; const decoyEmojis = ['🐻', '🦊', '🦉', '🦁', '🐺', '🐰', '🐸', '🐹'];
+        let targetIndices = [], userSelections = [];
+        function generateCaptcha() {
+            gridContainer.innerHTML = ''; targetIndices = []; userSelections = [];
+            let available = [...Array(9).keys()];
+            const numEagles = Math.floor(Math.random() * 3) + 2; 
+            for (let i = 0; i < numEagles; i++) {
+                const rand = Math.floor(Math.random() * available.length);
+                targetIndices.push(available[rand]); available.splice(rand, 1);
+            }
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.innerHTML = targetIndices.includes(i) ? targetEmoji : decoyEmojis[Math.floor(Math.random() * decoyEmojis.length)];
+                cell.onclick = () => {
+                    cell.classList.toggle('selected');
+                    const sIdx = userSelections.indexOf(i); sIdx === -1 ? userSelections.push(i) : userSelections.splice(sIdx, 1);
+                };
+                gridContainer.appendChild(cell);
+            }
+            targetIndices.sort((a,b)=>a-b);
+        }
+        function validateCaptcha() {
+            userSelections.sort((a,b)=>a-b);
+            if (JSON.stringify(userSelections) === JSON.stringify(targetIndices)) { navigateTo('page-signin'); } else { generateCaptcha(); }
+        }
+
+        // --- 3. AUTH LOGIC ---
+        async function validateSignIn(e) {
+            e.preventDefault();
+            const username = document.getElementById('signin_username').value.trim();
+            const password = document.getElementById('signin_password').value;
+            if (!username || !password) { alert("Fill all fields"); return; }
+            const response = await fetch('server.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'signin', username: username, password: password }) });
+            const result = await response.json();
+            if (result.status === 'success') { alert("Login Successful!"); localStorage.setItem('username', username); navigateTo('page-home'); } else { alert(result.message); }
+        }
+
+        async function validateSignUp(e) {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm_password').value;
+            const name = document.getElementById('name').value;
+            const city = document.getElementById('city').value;
+            if (pass !== confirm) { document.getElementById('matchError').style.display = 'block'; return false; }
+            const response = await fetch('server.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'signup', name: name, password: pass, city: city }) });
+            const result = await response.json();
+            if (result.status === 'success') { alert("Account Created Successfully!"); navigateTo('page-signin'); } else { alert("Error: " + result.message); }
+        }
+
+        function initSignupValidation() {
+            const today = new Date();
+            const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+            document.getElementById('date').max = maxDate.toISOString().split('T')[0];
+            const passInput = document.getElementById('password'); const passError = document.getElementById('passwordError');
+            passInput.addEventListener('input', function() { const val = this.value; const isValid = val.length >= 6 && /[A-Z]/.test(val) && /[0-9]/.test(val); passError.style.display = isValid ? 'none' : 'block'; });
+            const confirmInput = document.getElementById('confirm_password'); const matchError = document.getElementById('matchError');
+            confirmInput.addEventListener('blur', function() { const passVal = document.getElementById('password').value; matchError.style.display = (this.value === passVal) ? 'none' : 'block'; });
+        }
+
+        // --- 4. FEEDBACK LOGIC ---
+        async function submitFeedback(e) {
+            e.preventDefault();
+            const user = localStorage.getItem('username');
+            if(!user) { alert("Please login to submit feedback."); return; }
+            const msg = document.getElementById('feedbackMsg').value;
+            const response = await fetch('server.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'submit_feedback', username: user, message: msg }) });
+            const res = await response.json();
+            if(res.status === 'success') { document.getElementById('feedbackMsg').value = ""; loadFeedbacks(); alert("Thank you!"); } else { alert("Error"); }
+        }
+
+        async function loadFeedbacks() {
+            const container = document.getElementById('feedback-list');
+            const response = await fetch('server.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'get_feedback' }) });
+            const res = await response.json();
+            if(res.status === 'success') {
+                container.innerHTML = "";
+                if(res.data.length === 0) container.innerHTML = "<p class='text-center text-slate-500'>No reviews yet.</p>";
+                res.data.forEach(fb => {
+                    container.innerHTML += `<div class="bg-slate-50 p-4 rounded-lg border shadow-sm border-l-4 border-l-emerald-500"><h4 class="font-bold text-slate-800">${fb.username}</h4><p class="text-slate-600 mt-1">${fb.message}</p></div>`;
+                });
+            }
+        }
+
+        // --- 5. SLIDESHOWS ---
+        let slideIndex = 1; function plusSlides(n) { showSlides(slideIndex += n); } function currentSlide(n) { showSlides(slideIndex = n); }
+        function showSlides(n) { let slides = document.getElementsByClassName("mySlides"); let dots = document.getElementsByClassName("dot"); if (n > slides.length) {slideIndex = 1} if (n < 1) {slideIndex = slides.length} for (let i = 0; i < slides.length; i++) slides[i].style.display = "none"; for (let i = 0; i < dots.length; i++) dots[i].className = dots[i].className.replace(" active-dot", ""); slides[slideIndex-1].style.display = "block"; dots[slideIndex-1].className += " active-dot"; }
+        function autoSlides() { plusSlides(1); setTimeout(autoSlides, 4000); }
+        let aboutIndex = 1; function plusAboutSlides(n) { showAboutSlides(aboutIndex += n); } function currentAboutSlide(n) { showAboutSlides(aboutIndex = n); }
+        function showAboutSlides(n) { let slides = document.getElementsByClassName("aboutSlides"); let dots = document.getElementsByClassName("about-dot"); if (n > slides.length) {aboutIndex = 1} if (n < 1) {aboutIndex = slides.length} for (let i = 0; i < slides.length; i++) slides[i].style.display = "none"; for (let i = 0; i < dots.length; i++) dots[i].className = dots[i].className.replace(" active-dot", ""); slides[aboutIndex-1].style.display = "block"; dots[aboutIndex-1].className += " active-dot"; }
+
+        // --- 6. CHATBOT ---
+        function toggleChat() { const chatWindow = document.getElementById('chat-window'); chatWindow.style.display = (chatWindow.style.display === 'flex') ? 'none' : 'flex'; }
+        function handleKeyPress(e) { if(e.key === 'Enter') sendMessage(); }
+        function sendMessage() {
+            const input = document.getElementById('chat-input'); const message = input.value.trim(); if (message === "") return;
+            addMessage(message, 'user-msg'); input.value = "";
+            setTimeout(() => { const response = getBotResponse(message.toLowerCase()); addMessage(response, 'bot-msg'); }, 1000); 
+        }
+        function addMessage(text, className) { const msgDiv = document.createElement('div'); msgDiv.classList.add('msg', className); msgDiv.innerText = text; const container = document.getElementById('chat-messages'); container.appendChild(msgDiv); container.scrollTop = container.scrollHeight; }
+        function getBotResponse(input) {
+            if (input.includes("hello") || input.includes("hi")) return "Hello! Welcome to Saudi Smart Tourism. How can I help?";
+            if (input.includes("diriyah")) return "Diriyah is the City of Earth. Entry is free on weekdays until 4 PM.";
+            if (input.includes("alula")) return "AlUla is a living museum of human history. Tours start from 95 SAR.";
+            if (input.includes("price") || input.includes("ticket")) return "Diriyah: Free on weekdays. AlUla: From 95 SAR.";
+            if (input.includes("sign up") || input.includes("register")) return "Click 'Sign Up' in the top menu.";
+            if (input.includes("login")) return "Click 'Sign In' at the top right.";
+            return "I am still learning! Ask about Diriyah, AlUla, or tickets.";
+        }
+
+        // --- 7. MODAL & INIT ---
+        function openModal(dest) {
+            const modal = document.getElementById('imageModal'); const img = document.getElementById('modalImage'); const title = document.getElementById('modalTitle'); const desc = document.getElementById('modalDesc'); const btn = document.getElementById('modalActionBtn');
+            if (dest === 'diriyah') { img.src = 'dirya.jpg'; title.innerText = "Diriyah"; desc.innerText = "The City of Earth."; btn.onclick = () => { closeModal(); navigateTo('page-diriyah'); }; } 
+            else { img.src = 'alulaff.jpg'; title.innerText = "AlUla"; desc.innerText = "Historical Masterpiece."; btn.onclick = () => { closeModal(); navigateTo('page-alula'); }; }
+            modal.classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('imageModal').classList.add('hidden'); }
+        window.onload = function() { generateCaptcha(); initSignupValidation(); showSlides(1); setTimeout(autoSlides, 4000); showAboutSlides(1); };
+    </script>
+</body>
+</html>
